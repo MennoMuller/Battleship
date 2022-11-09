@@ -114,8 +114,8 @@ public class Player {
         }
     }
 
-    public boolean processHit(int x, int y) throws TileAlreadyHitException, ArrayIndexOutOfBoundsException {
-        return (board[x][y].processHit());
+    public boolean processHit(int x, int y) throws TileAlreadyKnownException, ArrayIndexOutOfBoundsException {
+        return (board[x][y].processHit(isAI));
     }
 
     public void shoot() {
@@ -131,8 +131,8 @@ public class Player {
         } else {
             System.out.println(name + "'s turn.");
         }
-        boolean hit = true;
-        while (hit && enemy.stillInGame()) {
+        boolean myTurn = true;
+        while (myTurn && enemy.stillInGame()) {
             if (isAI) {
                 try {
                     switch (searchType) {
@@ -143,23 +143,22 @@ public class Player {
                             y = random.nextInt(10);
                         }
                     }
-                    hit = enemy.processHit(x, y);
+                    myTurn = enemy.processHit(x, y);
                     if (!enemy.stillInGame()) {
                         System.out.println("Computer wins!");
                         return;
                     }
-                    if (hit) {
-                        switch (searchType) {
-                            case RANDOM -> searchType = SearchType.DECIDER;
-                            case DECIDER -> searchType = SearchType.HOR_FINDER;
-                        }
+                    if (myTurn) {
+                        hit();
                     } else {
                         noHit();
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
                     noHit();
-                } catch (Exception ignored) {
-
+                } catch (TileAlreadyKnownException e) {
+                    if (enemy.isMarked(x, y)) {
+                        noHit();
+                    }
                 }
             } else {
                 printBoard();
@@ -171,12 +170,18 @@ public class Player {
                     if (x > 9 || x < 0 || y > 9 || y < 0) {
                         throw new Exception();
                     } else {
-                        hit = enemy.processHit(x, y);
+                        myTurn = enemy.processHit(x, y);
+                        if (myTurn) {
+                            hit();
+                        }
                         if (!enemy.stillInGame()) {
+                            printBoard();
                             System.out.println("Congratulations! You win, " + name + "!");
                             return;
                         }
                     }
+                } catch (TileAlreadyKnownException e) {
+                    System.out.println("You already shot there!");
                 } catch (Exception e) {
                     System.out.println("Invalid coordinates.");
                 }
@@ -206,6 +211,28 @@ public class Player {
         }
     }
 
+    public void hit() {
+        enemy.mark(x - 1, y - 1);
+        enemy.mark(x - 1, y + 1);
+        enemy.mark(x + 1, y - 1);
+        enemy.mark(x + 1, y + 1); //we know there are no ships diagonally adjacent
+        switch (searchType) {
+            case RANDOM -> searchType = SearchType.DECIDER;
+            case DECIDER -> searchType = SearchType.HOR_FINDER;
+        }
+    }
+
+    public boolean isMarked(int x, int y) {
+        return board[x][y].isMarked();
+    }
+
+    public void mark(int x, int y) {
+        try {
+            board[x][y].mark();
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+        }
+    }
+
     public boolean stillInGame() {
         for (Ship s : ships) {
             if (!s.isSunk()) {
@@ -220,5 +247,5 @@ public class Player {
     }
 }
 
-class TileAlreadyHitException extends Exception {
+class TileAlreadyKnownException extends Exception {
 }

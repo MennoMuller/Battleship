@@ -1,9 +1,10 @@
 package com.mennomuller;
 
 public class Tile {
+    public static final boolean displayMarks = true;
     private final int x;
     private final int y;
-    private boolean isHit = false;
+    private boolean isHit = false, isMarked = false;
     private Ship shipHere = null;
 
     public Tile(int x, int y) {
@@ -15,8 +16,12 @@ public class Tile {
         return shipHere != null;
     }
 
-    public Ship getShipHere() {
-        return shipHere;
+    public boolean isMarked() {
+        return isMarked;
+    }
+
+    public void mark() {
+        isMarked = true;
     }
 
     public void addShip(Ship s) {
@@ -35,6 +40,9 @@ public class Tile {
             if (isHit) {
                 return "X";
             } else {
+                if (isMarked && displayMarks) {
+                    return "o";
+                }
                 return "\u001B[94m~\u001B[0m";//blue tilde
             }
         }
@@ -48,13 +56,16 @@ public class Tile {
                 return "\u001B[91mX\u001B[0m";//red X
             }
         } else {
+            if (isMarked && displayMarks) {
+                return "o";
+            }
             return ".";
         }
     }
 
-    public boolean processHit() throws TileAlreadyHitException {
-        if (isHit) {
-            throw new TileAlreadyHitException();
+    public boolean processHit(boolean isAI) throws TileAlreadyKnownException {
+        if (isHit || (isMarked && isAI)) {
+            throw new TileAlreadyKnownException();
         }
         System.out.println("Fired at " + (char) ('A' + y) + x);
         isHit = true;
@@ -63,6 +74,7 @@ public class Tile {
             return true;
         } else {
             System.out.println("SPLASH!");
+            mark();
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {

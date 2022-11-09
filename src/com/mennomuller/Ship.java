@@ -17,7 +17,7 @@ public class Ship {
             try {
                 setLocation(board, isAI);
                 isUnset = false;
-            } catch (BoatCollisionException e) {
+            } catch (ShipCollisionException e) {
                 if (!isAI) {
                     System.out.println("Too close to another ship.");
                 }
@@ -30,7 +30,7 @@ public class Ship {
 
     }
 
-    public void setLocation(Tile[][] board, boolean isAI) throws BoatCollisionException, IndexOutOfBoundsException {
+    public void setLocation(Tile[][] board, boolean isAI) throws ShipCollisionException, IndexOutOfBoundsException {
         location.clear();
         int x = -1, y = -1;
         Random random = new Random();
@@ -90,11 +90,11 @@ public class Ship {
         }
     }
 
-    private void addTile(int x, int y, Tile[][] board) throws BoatCollisionException, IndexOutOfBoundsException {
+    private void addTile(int x, int y, Tile[][] board) throws ShipCollisionException, IndexOutOfBoundsException {
         for (int i = x - 1; i <= x + 1; i++) {
             for (int j = y - 1; j <= y + 1; j++) {
                 if (i >= 0 && i < 10 && j >= 0 && j < 10 && board[i][j].isOccupied()) {
-                    throw new BoatCollisionException();
+                    throw new ShipCollisionException();
                 }
             }
         }
@@ -120,5 +120,5 @@ A
 V ~ ~ < # # # # >
  */
 
-class BoatCollisionException extends Exception {
+class ShipCollisionException extends Exception {
 }
