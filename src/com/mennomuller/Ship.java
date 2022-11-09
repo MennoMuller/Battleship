@@ -5,9 +5,10 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class Ship {
-    int length, health;
-    boolean isVertical;
-    ArrayList<Tile> location = new ArrayList<>();
+    private final int length;
+    private final ArrayList<Tile> location = new ArrayList<>();
+    private int health;
+    private boolean isVertical;
 
     public Ship(int length, Tile[][] board, boolean isAI) {
         this.length = length;
@@ -85,8 +86,26 @@ public class Ship {
                 addTile(x + i, y, board);
             }
         }
-        for (Tile t : location) {
-            t.addShip(this);
+        for (int i = 0; i < length; i++) {
+            if (i == 0) {
+                if (isVertical) {
+                    location.get(i).addShip(this, Tile.Section.TOP_END);
+                } else {
+                    location.get(i).addShip(this, Tile.Section.LEFT_END);
+                }
+            } else if (i == length - 1) {
+                if (isVertical) {
+                    location.get(i).addShip(this, Tile.Section.BOTTOM_END);
+                } else {
+                    location.get(i).addShip(this, Tile.Section.RIGHT_END);
+                }
+            } else {
+                if (isVertical) {
+                    location.get(i).addShip(this, Tile.Section.VERTICAL);
+                } else {
+                    location.get(i).addShip(this, Tile.Section.HORIZONTAL);
+                }
+            }
         }
     }
 
@@ -101,11 +120,13 @@ public class Ship {
         location.add(board[x][y]);
     }
 
-    public void getHit() {
+    public Tile.HitResult getHit() {
         System.out.println("BOOM!");
         if (--health <= 0) {
             System.out.println("Sunk a ship!");
+            return Tile.HitResult.SUNK;
         }
+        return Tile.HitResult.BOOM;
     }
 
     public boolean isSunk() {

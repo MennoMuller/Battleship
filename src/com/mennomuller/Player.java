@@ -12,7 +12,7 @@ public class Player {
     private final Random random = new Random();
     private boolean isAI;
     private Player enemy;
-    private int x, y, increment = 1;
+    private int x, y, increment = 1, currShipLength;
     private SearchType searchType = SearchType.RANDOM;
 
     public Player(boolean isAI) {
@@ -20,6 +20,7 @@ public class Player {
         if (isAI) {
             this.name = "Computer";
         } else {
+            searchType = SearchType.HUMAN;
             System.out.print("Input name: ");
             this.name = new Scanner(System.in).nextLine();
         }
@@ -47,7 +48,7 @@ public class Player {
         for (int i = 0; i < 10; i++) {
             System.out.print(i);
             for (int j = 0; j < 10; j++) {
-                System.out.print(" " + board[i][j]);
+                System.out.print(board[i][j]);
             }
             System.out.print("  " + i);
             for (int j = 0; j < 10; j++) {
@@ -69,7 +70,12 @@ public class Player {
     }
 
     public String displayHit(int x, int y) {
-        return board[x][y].displayHit();
+        try {
+            return board[x][y].displayHit();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return "X";
+        }
+
     }
 
     public void addShip(int length) {
@@ -114,8 +120,8 @@ public class Player {
         }
     }
 
-    public boolean processHit(int x, int y) throws TileAlreadyKnownException, ArrayIndexOutOfBoundsException {
-        return (board[x][y].processHit(isAI));
+    public Tile.HitResult processHit(int x, int y) throws TileAlreadyKnownException, ArrayIndexOutOfBoundsException {
+        return (board[x][y].processHit(enemy.isAI));
     }
 
     public void shoot() {
@@ -143,16 +149,13 @@ public class Player {
                             y = random.nextInt(10);
                         }
                     }
-                    myTurn = enemy.processHit(x, y);
+                    Tile.HitResult result = enemy.processHit(x, y);
+                    myTurn = result.isHit;
                     if (!enemy.stillInGame()) {
                         System.out.println("Computer wins!");
                         return;
                     }
-                    if (myTurn) {
-                        hit();
-                    } else {
-                        noHit();
-                    }
+                    reactToHit(result);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     noHit();
                 } catch (TileAlreadyKnownException e) {
@@ -170,10 +173,9 @@ public class Player {
                     if (x > 9 || x < 0 || y > 9 || y < 0) {
                         throw new Exception();
                     } else {
-                        myTurn = enemy.processHit(x, y);
-                        if (myTurn) {
-                            hit();
-                        }
+                        Tile.HitResult result = enemy.processHit(x, y);
+                        myTurn = result.isHit;
+                        reactToHit(result);
                         if (!enemy.stillInGame()) {
                             printBoard();
                             System.out.println("Congratulations! You win, " + name + "!");
@@ -212,6 +214,7 @@ public class Player {
     }
 
     public void hit() {
+        currShipLength++;
         enemy.mark(x - 1, y - 1);
         enemy.mark(x - 1, y + 1);
         enemy.mark(x + 1, y - 1);
@@ -222,8 +225,44 @@ public class Player {
         }
     }
 
+    public void sunk() {
+        hit();
+        if (enemy.isMarked(x - 1, y) && enemy.isMarked(x + 1, y)) {
+            while (enemy.displayHit(x, y).equals("\u001B[91mX\u001B[0m")) {
+                y++;
+            }
+            enemy.mark(x, y);
+            enemy.mark(x, y - (currShipLength + 1));
+        } else {
+            while (enemy.displayHit(x, y).equals("\u001B[91mX\u001B[0m")) {
+                x++;
+            }
+            enemy.mark(x, y);
+            enemy.mark(x - (currShipLength + 1), y);
+        }
+        resetSearch();
+    }
+
+    private void resetSearch() {
+        increment = 1;
+        currShipLength = 0;
+        searchType = SearchType.RANDOM;
+    }
+
+    private void reactToHit(Tile.HitResult result) {
+        switch (result) {
+            case SPLASH -> noHit();
+            case BOOM -> hit();
+            case SUNK -> sunk();
+        }
+    }
+
     public boolean isMarked(int x, int y) {
-        return board[x][y].isMarked();
+        try {
+            return board[x][y].isMarked();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return true;
+        }
     }
 
     public void mark(int x, int y) {
@@ -243,7 +282,7 @@ public class Player {
     }
 
     public enum SearchType {
-        RANDOM, VERT_FINDER, HOR_FINDER, DECIDER
+        RANDOM, VERT_FINDER, HOR_FINDER, DECIDER, HUMAN
     }
 }
 
