@@ -22,6 +22,10 @@ public class Tile {
         return isMarked;
     }
 
+    public boolean isKnown() {
+        return isMarked || isHit;
+    }
+
     public void mark() {
         isMarked = true;
     }
@@ -71,11 +75,6 @@ public class Tile {
         } else {
             System.out.println("SPLASH!");
             mark();
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             return HitResult.SPLASH;
         }
     }

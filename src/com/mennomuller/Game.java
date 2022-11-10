@@ -3,7 +3,7 @@ package com.mennomuller;
 import java.util.Scanner;
 
 public class Game {
-    private Player player1, player2;
+    private Player player1, player2, winner, loser;
 
     public Game() {
         boolean undecided = true;
@@ -31,14 +31,33 @@ public class Game {
                 default -> System.out.println("Please answer YES or NO.");
             }
         } while (undecided);
-        player1.setEnemy(player2);
+    }
+
+    public Game(Player player1, Player player2) {
+        this.player1 = player1;
+        this.player2 = player2;
     }
 
     public void play() {
+        player1.resetEnemy();
+        player2.resetEnemy();
+        player1.setEnemy(player2);
         do {
             player1.shoot();
             player2.shoot();
         } while (player1.stillInGame() && player2.stillInGame());
+        if (player1.stillInGame()) {
+            winner = player1;
+        } else {
+            winner = player2;
+        }
     }
 
+    public Player getWinner() {
+        return winner;
+    }
+
+    public Player getLoser() {
+        return loser;
+    }
 }
