@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Zeeslag:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Zeeslag_jar</output-path>
+    <root id="archive" name="Zeeslag.jar">
+      <element id="module-output" name="Zeeslag" />
+    </root>
+  </artifact>
+</component>
